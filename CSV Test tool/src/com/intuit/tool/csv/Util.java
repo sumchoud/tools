@@ -35,7 +35,8 @@ public class Util {
 	private static Map<String, String> config = new HashMap<String, String>();
 	private static Map<Integer, Integer> mapping = new HashMap<Integer, Integer>();
 	private static Properties properties;
-	private static final String PRIMARY_COLUMN_INDEX_KEY = "primary.column";
+	private static final String PRIMARY_COLUMN_INDEX_KEY = "primary.column.primary.data";
+	private static final String SECONDARY_COLUMN_INDEX_KEY = "primary.column.secondary.data";
 	private static final String MAPPING_COLUMN_KEY = "column.mapping";
 	private static final String LINE_IGNORE_CHAR_KEY = "line.ingnore.char";
 	private static final String INGNORE_CHAR_KEY = "ingnore.char";
@@ -46,8 +47,8 @@ public class Util {
 
 		properties = new Properties();
 		loadMappingConfiguraution();
-		REPORT_FILE = REPORT_FILE+"_"+new Date().getTime();
-		
+		REPORT_FILE = REPORT_FILE + "_" + new Date().getTime();
+
 		try {
 			properties.load(in);
 		} catch (IOException e) {
@@ -73,42 +74,57 @@ public class Util {
 						Integer.valueOf(token[2].trim()));
 
 			} else {
-				System.out.println("[CONFIG]bad map:" + map);
+				System.out.println("[CONFIG]bad map:" + map + "mapppings: "
+						+ mappings);
 			}
 
 		}
 
 	}
-	
+
 	public static void main(String[] args) {
 		Util util = new Util();
-		
-		util.compare(args[0], args[1]);
+
+		try {
+			util.compare(args[0], args[1]);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 
-	public void compare(String csv1, String csv2) {
+	public void compare(String csv1, String csv2) throws Exception {
 
 		loadConfiguration();
-		
-		Map<String, List<String>> primaryData = loadCSV(csv1,
-				Integer.valueOf(properties
-						.getProperty(PRIMARY_COLUMN_INDEX_KEY)));
 
-		Map<String, List<String>> secondaryData = loadCSV(csv1,
-				Integer.valueOf(properties
-						.getProperty(PRIMARY_COLUMN_INDEX_KEY)));
+		int primaryKey = Integer.valueOf(
+				properties.getProperty(PRIMARY_COLUMN_INDEX_KEY), -1);
 
-		for(String primarykey : primaryData.keySet() ){
+		int secondary = Integer.valueOf(
+				properties.getProperty(SECONDARY_COLUMN_INDEX_KEY), -1);
+
+		if (primaryKey == -1 || secondary == -1) {
+			System.out
+					.println("[ERROR] Either primary key from primary data or secondary data is missing");
+			throw new Exception(
+					"[ERROR] Either primary key from primary data or secondary data is missing");
+		}
+
+		Map<String, List<String>> primaryData = loadCSV(csv1,primaryKey);
+
+		Map<String, List<String>> secondaryData = loadCSV(csv1,secondary);
+
+		for (String primarykey : primaryData.keySet()) {
 			List<String> pData = primaryData.get(primarykey);
 			List<String> sData = secondaryData.get(primarykey);
-			
-			if(pData==null || sData==null){
-				logInreportFile("Key:"+ primarykey+", incorrect data");
-			}else{
+
+			if (pData == null || sData == null) {
+				logInreportFile("Key:" + primarykey + ", incorrect data");
+			} else {
 				compareData(primarykey, pData, sData);
 			}
 		}
-		
+
 	}
 
 	private boolean compareData(String key, List<String> primaryData,
@@ -131,7 +147,7 @@ public class Util {
 				String log = "Key:" + key + " data mismatch at column ("
 						+ primaryKey + "," + secondKey + ")" + " value("
 						+ primaryValue + "," + secondValue + ")";
-				
+
 				logInreportFile(log);
 			}
 
