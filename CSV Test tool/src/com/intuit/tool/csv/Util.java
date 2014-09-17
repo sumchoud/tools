@@ -79,9 +79,17 @@ public class Util {
 		}
 
 	}
+	
+	public static void main(String[] args) {
+		Util util = new Util();
+		
+		util.compare(args[0], args[1]);
+	}
 
 	public void compare(String csv1, String csv2) {
 
+		loadConfiguration();
+		
 		Map<String, List<String>> primaryData = loadCSV(csv1,
 				Integer.valueOf(properties
 						.getProperty(PRIMARY_COLUMN_INDEX_KEY)));
